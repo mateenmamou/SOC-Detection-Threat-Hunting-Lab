@@ -17,3 +17,7 @@ This file tracks the selected screenshots from the lab evidence set and the fina
 ## Selection approach
 
 The final evidence set intentionally excludes duplicate screenshots, intermediate troubleshooting screenshots, and unrelated images. The goal is to make the repository easy to review while preserving enough evidence to support the written findings.
+
+## Evidence quality notes
+
+Each image supports a different part of the investigation rather than repeating the same dashboard view. The intended review sequence is: environment → network detection → Windows endpoint analysis → SSH authentication → Linux Auditd command visibility.
