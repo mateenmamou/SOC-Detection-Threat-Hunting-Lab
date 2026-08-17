@@ -387,17 +387,3 @@ MITRE ATT&CK mappings were used as investigative context rather than automatic p
 8. A running security agent does not necessarily mean it is successfully communicating with the SIEM.
 9. Troubleshooting the telemetry pipeline is an important part of detection engineering and SOC operations.
 10. Analysts should distinguish between what the evidence proves and what it only suggests.
-
----
-
-# Evidence Organization
-
-The repository uses a deliberately small evidence set organized by investigation stage so the project remains easy to review. The mapping from original screenshots to final repository filenames is documented in [`docs/screenshot-evidence-map.md`](docs/screenshot-evidence-map.md).
-
----
-
-# Project Status
-
-✅ **Core lab implementation and documentation complete**
-
-The project currently includes Windows and Linux endpoint monitoring, network reconnaissance detection, SSH authentication analysis, Sysmon-based process investigation, Auditd command execution visibility, Wazuh troubleshooting, MITRE ATT&CK mapping, and selected screenshot evidence.
