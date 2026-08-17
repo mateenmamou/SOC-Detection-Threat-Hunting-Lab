@@ -1,0 +1,5 @@
+<!-- Add inside the Wazuh agent's ossec.conf to collect Linux Auditd events. -->
+<localfile>
+  <log_format>audit</log_format>
+  <location>/var/log/audit/audit.log</location>
+</localfile>

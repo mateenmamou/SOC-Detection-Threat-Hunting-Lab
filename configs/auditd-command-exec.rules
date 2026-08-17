@@ -1,0 +1,6 @@
+# Monitor Linux process execution through execve.
+# 64-bit execution
+-a always,exit -F arch=b64 -S execve -k command_exec
+
+# 32-bit execution
+-a always,exit -F arch=b32 -S execve -k command_exec

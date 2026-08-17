@@ -20,7 +20,7 @@ The project focuses not only on generating alerts, but also on examining the und
 |---|---|
 | Wazuh Server | SIEM, log analysis, alerting, correlation, and threat hunting |
 | Wazuh Indexer | Stores and indexes security alerts and events |
-| Wazuh Dashboard | Provides the interface used for threat hunting and investigation |
+| Wazuh Dashboard | Interface used for threat hunting and investigation |
 | Windows 11 | Monitored Windows endpoint |
 | Ubuntu Linux | Monitored Linux endpoint used for SSH and authentication analysis |
 | Wazuh Agent | Sends endpoint security telemetry to the Wazuh server |
@@ -29,6 +29,10 @@ The project focuses not only on generating alerts, but also on examining the und
 | Windows Firewall | Generates network connection and DROP logs |
 | Kali Linux | Generates controlled security activity for detection testing |
 | VirtualBox | Hosts the virtual lab environment |
+
+### Active endpoints
+
+![Windows and Ubuntu Wazuh agents active](screenshots/01-lab-environment/agents-active.jpg)
 
 ---
 
@@ -39,33 +43,33 @@ The project focuses not only on generating alerts, but also on examining the und
                        192.168.1.139
                          /       \
                         /         \
-                       ↓           ↓
+                       v           v
                 Windows 11       Ubuntu Linux
                192.168.1.147    192.168.1.142
-                     │                │
+                     |                |
               Windows Firewall      SSH / PAM
                    Sysmon            Auditd
-                     │                │
+                     |                |
                 Wazuh Agent      Wazuh Agent
                       \              /
                        \            /
-                        ↓          ↓
+                        v          v
                         Wazuh Server
                        192.168.1.146
-                              │
-                              ↓
+                              |
+                              v
                        Detection Rules
-                              │
-                              ↓
+                              |
+                              v
                             Alerts
-                              │
-                              ↓
+                              |
+                              v
                        Threat Hunting
-                              │
-                              ↓
+                              |
+                              v
                         Investigation
-                              │
-                              ↓
+                              |
+                              v
                       Analyst Response
 ```
 
@@ -81,27 +85,17 @@ Windows Firewall recorded blocked TCP connection attempts, which were collected 
 
 A custom Wazuh correlation rule was created to identify multiple firewall drops occurring within a short period.
 
-### Detection Workflow
+**Detection workflow:**
 
 ```text
-Kali Linux
-    ↓
-Network Scan
-    ↓
-Windows Firewall DROP
-    ↓
-Wazuh Agent
-    ↓
-Wazuh
-    ↓
-Correlation Rule
-    ↓
-Alert
+Kali Linux → Network Scan → Windows Firewall DROP → Wazuh Agent → Wazuh → Correlation Rule → Alert
 ```
 
 **MITRE ATT&CK:** T1046 — Network Service Discovery
 
 This scenario demonstrates how multiple low-level network events can be correlated into a higher-confidence security alert.
+
+![Network reconnaissance correlation evidence](screenshots/02-network-recon/network-recon-correlation.jpg)
 
 ---
 
@@ -111,49 +105,18 @@ A controlled SSH authentication scenario was generated from Kali Linux against t
 
 Multiple incorrect passwords were intentionally submitted against the `labuser` account, followed by a successful authentication.
 
-Wazuh collected the Ubuntu SSH and PAM authentication logs and generated several related alerts, including:
-
-- SSH authentication failures
-- PAM login failures
-- Multiple failed password attempts
-- Successful SSH authentication
-- PAM session creation
+Wazuh collected the Ubuntu SSH and PAM authentication logs and generated related alerts for authentication failures, repeated password failures, successful authentication, and PAM session creation.
 
 Repeated password failures triggered a **Wazuh Level 10 alert**, increasing the priority of the activity for investigation.
 
-### Detection Workflow
-
-```text
-Kali Linux
-    ↓
-SSH Authentication Attempts
-    ↓
-Ubuntu Linux
-    ↓
-SSH / PAM Logs
-    ↓
-Wazuh Agent
-    ↓
-Wazuh
-    ↓
-Authentication Alerts
-    ↓
-SOC Investigation
-```
-
 ### Investigation Findings
 
-The authentication events were correlated to reconstruct the sequence of activity.
+- **Source:** `192.168.1.139`
+- **Target:** `192.168.1.142`
+- **Target account:** `labuser`
+- **Service:** SSH / TCP 22
 
-**Source:** `192.168.1.139`
-
-**Target:** `192.168.1.142`
-
-**Target Account:** `labuser`
-
-**Service:** SSH / TCP 22
-
-The observed sequence was:
+The observed pattern was:
 
 ```text
 Failed Authentication
@@ -167,20 +130,11 @@ Successful Authentication
 PAM Session Opened
 ```
 
-Multiple failed authentication attempts alone do not prove malicious activity because legitimate users can mistype credentials.
+Multiple failed authentication attempts alone do not prove malicious activity because legitimate users can mistype credentials. However, repeated failures followed by a successful login create a suspicious pattern that requires additional investigation.
 
-However, repeated authentication failures followed by a successful login create a suspicious pattern that requires additional investigation.
+![SSH authentication timeline](screenshots/04-ssh-authentication/ssh-authentication-timeline.jpg)
 
-If the source system were determined to be unauthorized, the successful authentication could indicate account compromise.
-
-Possible response actions would include:
-
-- Identifying the device associated with the source IP
-- Determining whether the source was authorized to access the server
-- Reviewing activity performed after authentication
-- Resetting or disabling the affected account if compromise is confirmed
-- Terminating unauthorized sessions
-- Isolating or blocking the source system when appropriate
+See [SSH Authentication Analysis](docs/ssh-authentication-analysis.md) for the focused investigation write-up.
 
 ---
 
@@ -197,34 +151,16 @@ Sysmon provides visibility into activity including:
 - File hashes
 - DNS activity
 - Network activity
-- Process IDs
-- Process GUIDs
+- Process IDs and GUIDs
 - User context
 
 Sysmon telemetry is forwarded through the Wazuh agent for analysis and threat hunting.
 
----
-
 ## Windows Process Investigation
 
-During testing, process creation telemetry was investigated using Sysmon.
+Process creation telemetry was investigated using fields such as `Image`, `CommandLine`, `ParentImage`, `ParentCommandLine`, `ProcessId`, `ParentProcessId`, `ProcessGuid`, `User`, and `IntegrityLevel`.
 
-Fields examined included:
-
-- `Image`
-- `CommandLine`
-- `ParentImage`
-- `ParentCommandLine`
-- `ProcessId`
-- `ParentProcessId`
-- `ProcessGuid`
-- `User`
-- `IntegrityLevel`
-- File hashes
-
-This allowed process relationships to be reconstructed rather than evaluating individual processes in isolation.
-
-For example, account discovery activity involving Windows utilities such as:
+Account discovery activity involving Windows utilities such as:
 
 ```text
 net user
@@ -237,7 +173,9 @@ These commands can be used legitimately by administrators but can also be used b
 
 **MITRE ATT&CK:** T1087 — Account Discovery
 
-This demonstrated the importance of distinguishing between a legitimate administrative tool and potentially suspicious use of that tool.
+![Windows Sysmon event details](screenshots/03-windows-sysmon/sysmon-event-details.jpg)
+
+See [Windows Sysmon Investigation](docs/windows-sysmon-investigation.md) for the focused investigation write-up.
 
 ---
 
@@ -245,63 +183,30 @@ This demonstrated the importance of distinguishing between a legitimate administ
 
 During testing, Wazuh generated a high-severity alert after PowerShell created a `.ps1` file within a user's temporary directory.
 
-Rather than classifying the activity as malicious based only on the alert severity, the underlying Sysmon telemetry was investigated.
+Rather than classifying the activity as malicious based only on alert severity, the underlying Sysmon telemetry was investigated.
 
-The investigation included reviewing:
-
-- Process image
-- Parent process
-- Target file
-- User
-- Event ID
-- Process ID
-- Process GUID
-- File hashes
-- Surrounding events
+The investigation included reviewing the process image, parent process, target file, user, event ID, process ID, process GUID, file hashes, and surrounding events.
 
 The observed activity was determined to be consistent with expected PowerShell behavior within the lab environment.
 
-This demonstrated an important SOC principle:
-
 > **An alert indicates that detection logic matched an event. It does not automatically prove that a security incident occurred.**
-
-Analysts must validate alerts using the underlying telemetry and surrounding context.
 
 ---
 
 # Linux Command Monitoring with Auditd
 
-During post-authentication testing on Ubuntu, a visibility gap was identified.
+During post-authentication testing on Ubuntu, a visibility gap was identified. Wazuh successfully detected SSH authentication, PAM activity, and sudo activity, but detailed visibility into commands executed during the Linux session was initially limited.
 
-Wazuh successfully detected:
-
-- SSH authentication failures
-- Successful SSH authentication
-- PAM activity
-- Sudo activity
-
-However, detailed visibility into commands executed during the Linux session was initially limited.
-
-Auditd was installed and configured to provide additional Linux process execution telemetry.
-
----
+Auditd was installed and configured to provide Linux process execution telemetry.
 
 ## Auditd Process Execution Rules
-
-Audit rules were created to monitor the Linux `execve` system call.
 
 ```text
 -a always,exit -F arch=b64 -S execve -k command_exec
 -a always,exit -F arch=b32 -S execve -k command_exec
 ```
 
-These rules monitor both 64-bit and 32-bit program execution.
-
-Matching events are tagged with:
-
-```text
-command_exec
-```
+These rules monitor both 64-bit and 32-bit `execve` program execution and tag matching events with the key `command_exec`.
 
 The rules were verified using:
 
@@ -309,11 +214,9 @@ The rules were verified using:
 sudo auditctl -l
 ```
 
-Auditd telemetry was then validated locally using `ausearch` before attempting to analyze it through Wazuh.
+Auditd telemetry was validated locally with `ausearch` before confirming ingestion through Wazuh.
 
-This helped verify each stage of the telemetry pipeline independently.
-
----
+The exact rule file used for this documentation is available at [`configs/auditd-command-exec.rules`](configs/auditd-command-exec.rules).
 
 ## Wazuh Auditd Collection
 
@@ -326,7 +229,9 @@ The Auditd log was added to the Wazuh agent configuration:
 </localfile>
 ```
 
-This created the following telemetry pipeline:
+The configuration snippet is also available at [`configs/ossec-auditd-localfile.xml`](configs/ossec-auditd-localfile.xml).
+
+Telemetry pipeline:
 
 ```text
 Linux Command
@@ -350,9 +255,7 @@ Threat Hunting
 SOC Investigation
 ```
 
-Auditd events were successfully received and decoded by Wazuh.
-
-The resulting events provided fields including:
+Wazuh successfully exposed detailed Auditd fields including:
 
 - `data.audit.command`
 - `data.audit.exe`
@@ -364,7 +267,9 @@ The resulting events provided fields including:
 - `data.audit.cwd`
 - `data.audit.success`
 
-This improved visibility into activity occurring after a successful Linux authentication.
+![Auditd command details in Wazuh](screenshots/05-linux-auditd/auditd-command-details.jpg)
+
+See [Linux Auditd Command Monitoring](docs/linux-auditd-command-monitoring.md) for the focused investigation write-up.
 
 ---
 
@@ -378,77 +283,35 @@ During Auditd testing, Wazuh generated an alert associated with SSH/lateral-move
 lscpu -J
 ```
 
-The underlying Auditd telemetry showed:
+The underlying Auditd telemetry showed the command, executable, argument, `command_exec` audit key, and successful execution status. Because the underlying activity was consistent with system-information gathering in the lab, the detection required investigation rather than automatically being treated as confirmed lateral movement.
 
 ```text
-Command: lscpu
-Executable: /usr/bin/lscpu
-Argument: -J
-Audit Key: command_exec
-Execution: Successful
+Detection Rule Match ≠ Confirmed Security Incident
 ```
 
-Because the underlying command was consistent with system-information gathering, the alert required additional investigation rather than automatically being treated as confirmed lateral movement.
+MITRE ATT&CK mappings and alert severity provide investigative context, but the underlying evidence still has to be validated.
 
-This reinforced the difference between:
-
-```text
-Detection Rule Match
-        ≠
-Confirmed Security Incident
-```
-
-Detection severity and MITRE ATT&CK mappings provide valuable context, but analysts must still examine the underlying evidence.
+![Auditd lscpu detection validation](screenshots/05-linux-auditd/auditd-lscpu-detection.jpg)
 
 ---
 
 # Troubleshooting and Lab Development
 
-Building the lab also required troubleshooting the monitoring infrastructure.
-
 During deployment of the Ubuntu Wazuh agent, the endpoint could reach the Wazuh server but could not successfully enroll.
 
-Reviewing:
-
-```text
-/var/ossec/logs/ossec.log
-```
-
-revealed:
+Reviewing `/var/ossec/logs/ossec.log` revealed:
 
 ```text
 Agent version must be lower or equal to manager version
 ```
 
-The Ubuntu agent was running a newer version of Wazuh than the central Wazuh manager.
+The Ubuntu agent was running a newer Wazuh version than the central manager. A VirtualBox snapshot was created before the Wazuh Manager, Indexer, and Dashboard were upgraded. After the upgrade, the Ubuntu endpoint successfully enrolled and appeared as an active Wazuh agent.
 
-A VirtualBox snapshot was created before upgrading the central Wazuh components.
-
-The following components were upgraded to matching versions:
-
-- Wazuh Manager
-- Wazuh Indexer
-- Wazuh Dashboard
-
-After the upgrade, the Ubuntu endpoint successfully enrolled and appeared as an active Wazuh agent.
-
-This troubleshooting demonstrated the importance of distinguishing between:
-
-```text
-Service Running
-        ↓
-and
-        ↓
-Application Successfully Connected
-```
-
-A running endpoint service does not necessarily mean that the endpoint is successfully communicating with the SIEM.
+This demonstrated the difference between a service simply running and an application successfully communicating with the SIEM.
 
 ---
 
 # SOC Investigation Methodology
-
-Throughout the project, alerts were investigated using the following workflow:
 
 ```text
 Alert Generated
@@ -480,58 +343,6 @@ The project emphasizes separating what the evidence **proves** from what the evi
 
 ---
 
-# Key SOC Concepts Practiced
-
-### Event vs Alert vs Incident
-
-**Event**
-
-Something occurred on a system.
-
-Example:
-
-```text
-SSH authentication failed.
-```
-
-**Alert**
-
-A detection rule identified activity that requires attention.
-
-Example:
-
-```text
-Multiple SSH password failures detected.
-```
-
-**Incident**
-
-Investigation determines that unauthorized or malicious security activity occurred and requires response.
-
----
-
-### IOC vs TTP
-
-Indicators of Compromise can include:
-
-- Malicious IP addresses
-- Malicious domains
-- Known malware hashes
-- Suspicious files
-- Known command-and-control infrastructure
-
-Tactics, Techniques, and Procedures describe attacker behavior, such as:
-
-- Account Discovery
-- Network Service Discovery
-- Credential attacks
-- Privilege discovery
-- Lateral movement
-
-This lab focused heavily on behavioral analysis and event correlation rather than relying exclusively on known malicious indicators.
-
----
-
 # MITRE ATT&CK Techniques Observed / Investigated
 
 | Technique | Description |
@@ -546,55 +357,33 @@ MITRE ATT&CK mappings were used as investigative context rather than automatic p
 
 # Skills Demonstrated
 
-- SIEM monitoring
-- Wazuh administration
+- SIEM monitoring and Wazuh administration
 - Multi-endpoint monitoring
-- Windows event analysis
-- Linux security monitoring
-- Sysmon configuration and analysis
-- Linux Auditd configuration
-- SSH authentication analysis
-- PAM log analysis
-- Custom detection rules
-- Alert correlation
-- Threat hunting
-- Log analysis
+- Windows event and Sysmon analysis
+- Linux security monitoring and Auditd configuration
+- SSH authentication and PAM log analysis
+- Custom detection rules and alert correlation
+- Threat hunting and log analysis
 - Network traffic analysis
-- Process analysis
 - Parent/child process analysis
 - File/hash analysis
 - Linux process execution monitoring
 - False-positive investigation
 - MITRE ATT&CK mapping
-- Incident triage
-- SOC investigation methodology
+- Incident triage and SOC investigation methodology
 - Security monitoring troubleshooting
 
 ---
 
 # Key Lessons Learned
 
-This project demonstrated that effective security monitoring requires more than generating alerts.
-
-Important lessons included:
-
-1. **High-severity alerts are not automatically confirmed incidents.**
-2. **Multiple related events provide more context than a single alert.**
-3. **Failed authentication followed by successful authentication deserves additional investigation.**
-4. **Parent/child process relationships can provide critical context during endpoint investigations.**
-5. **Legitimate administrative tools can also be used for malicious purposes.**
-6. **Additional telemetry may be required when the existing logging does not provide enough visibility.**
-7. **Detection rules and MITRE ATT&CK mappings must be validated against the underlying telemetry.**
-8. **A running security agent does not necessarily mean that it is successfully communicating with the SIEM.**
-9. **Troubleshooting the telemetry pipeline is an important part of detection engineering and SOC operations.**
-10. **Analysts should distinguish between what the evidence proves and what it only suggests.**
-
----
-
-# Project Status
-
-🚧 **In Progress**
-
-Core Windows and Linux monitoring, network reconnaissance detection, SSH authentication analysis, Sysmon investigation, and Auditd command execution monitoring have been implemented.
-
-Additional documentation, screenshots, and final project organization will be completed before the project is marked finished.
+1. High-severity alerts are not automatically confirmed incidents.
+2. Multiple related events provide more context than a single alert.
+3. Failed authentication followed by successful authentication deserves additional investigation.
+4. Parent/child process relationships can provide critical context during endpoint investigations.
+5. Legitimate administrative tools can also be used for malicious purposes.
+6. Additional telemetry may be required when existing logging does not provide enough visibility.
+7. Detection rules and MITRE ATT&CK mappings must be validated against underlying telemetry.
+8. A running security agent does not necessarily mean it is successfully communicating with the SIEM.
+9. Troubleshooting the telemetry pipeline is an important part of detection engineering and SOC operations.
+10. Analysts should distinguish between what the evidence proves and what it only suggests.
