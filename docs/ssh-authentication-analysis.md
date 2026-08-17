@@ -17,6 +17,6 @@ The important analytical point is that failed logins alone do not prove maliciou
 
 If the source were unauthorized, response actions could include resetting or disabling the affected account, terminating unauthorized sessions, reviewing activity after login, and blocking or isolating the source when appropriate.
 
-![SSH authentication timeline](../screenshots/04-ssh-authentication/ssh-authentication-timeline.png)
+![SSH authentication timeline](../screenshots/04-ssh-authentication/ssh-authentication-timeline.jpg)
 
-![SSH authentication event details](../screenshots/04-ssh-authentication/ssh-authentication-details.png)
+![SSH authentication event details](../screenshots/04-ssh-authentication/ssh-authentication-details.jpg)
