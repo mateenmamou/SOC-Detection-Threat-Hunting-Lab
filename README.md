@@ -165,6 +165,8 @@ These commands can be used legitimately by administrators but can also be used b
 
 **MITRE ATT&CK:** T1087 — Account Discovery
 
+See [Windows Sysmon Investigation](docs/windows-sysmon-investigation.md) for the focused investigation write-up.
+
 ---
 
 # PowerShell / File Creation Investigation
@@ -204,6 +206,8 @@ sudo auditctl -l
 
 Auditd telemetry was validated locally with `ausearch` before confirming ingestion through Wazuh.
 
+The exact rule file used for this documentation is available at [`configs/auditd-command-exec.rules`](configs/auditd-command-exec.rules).
+
 ## Wazuh Auditd Collection
 
 The Auditd log was added to the Wazuh agent configuration:
@@ -214,6 +218,8 @@ The Auditd log was added to the Wazuh agent configuration:
   <location>/var/log/audit/audit.log</location>
 </localfile>
 ```
+
+The configuration snippet is also available at [`configs/ossec-auditd-localfile.xml`](configs/ossec-auditd-localfile.xml).
 
 Telemetry pipeline:
 
@@ -367,6 +373,12 @@ MITRE ATT&CK mappings were used as investigative context rather than automatic p
 8. A running security agent does not necessarily mean it is successfully communicating with the SIEM.
 9. Troubleshooting the telemetry pipeline is an important part of detection engineering and SOC operations.
 10. Analysts should distinguish between what the evidence proves and what it only suggests.
+
+---
+
+# Evidence Organization
+
+The selected screenshot evidence is being organized into concise investigation folders rather than uploading every troubleshooting screenshot. The selection plan is documented in [`docs/screenshot-evidence-map.md`](docs/screenshot-evidence-map.md).
 
 ---
 
