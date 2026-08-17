@@ -20,8 +20,8 @@ Useful fields visible in the events include:
 
 During validation, Wazuh identified execution of `/usr/bin/lscpu` and mapped the resulting activity to MITRE ATT&CK T1021.004 (SSH) because it occurred in the context of the controlled SSH activity. This is a useful example of why an analyst must review raw telemetry and context rather than treating a detection title as proof of malicious behavior.
 
-![auditd events](../screenshots/05-linux-auditd/auditd-events.png)
+![auditd events](../screenshots/05-linux-auditd/auditd-events.jpg)
 
-![auditd command details](../screenshots/05-linux-auditd/auditd-command-details.png)
+![auditd command details](../screenshots/05-linux-auditd/auditd-command-details.jpg)
 
-![Wazuh lscpu detection](../screenshots/05-linux-auditd/auditd-lscpu-detection.png)
+![Wazuh lscpu detection](../screenshots/05-linux-auditd/auditd-lscpu-detection.jpg)
