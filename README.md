@@ -30,6 +30,10 @@ The project focuses not only on generating alerts, but also on examining the und
 | Kali Linux | Generates controlled security activity for detection testing |
 | VirtualBox | Hosts the virtual lab environment |
 
+### Active endpoints
+
+![Windows and Ubuntu Wazuh agents active](screenshots/01-lab-environment/agents-active.jpg)
+
 ---
 
 ## Lab Architecture
@@ -91,6 +95,8 @@ Kali Linux → Network Scan → Windows Firewall DROP → Wazuh Agent → Wazuh 
 
 This scenario demonstrates how multiple low-level network events can be correlated into a higher-confidence security alert.
 
+![Network reconnaissance correlation evidence](screenshots/02-network-recon/network-recon-correlation.jpg)
+
 ---
 
 ## 2. SSH Authentication Detection
@@ -125,6 +131,8 @@ PAM Session Opened
 ```
 
 Multiple failed authentication attempts alone do not prove malicious activity because legitimate users can mistype credentials. However, repeated failures followed by a successful login create a suspicious pattern that requires additional investigation.
+
+![SSH authentication timeline](screenshots/04-ssh-authentication/ssh-authentication-timeline.jpg)
 
 See [SSH Authentication Analysis](docs/ssh-authentication-analysis.md) for the focused investigation write-up.
 
@@ -164,6 +172,8 @@ was investigated by reviewing the executable, command line, parent process, user
 These commands can be used legitimately by administrators but can also be used by attackers to discover accounts and privileged users.
 
 **MITRE ATT&CK:** T1087 — Account Discovery
+
+![Windows Sysmon event details](screenshots/03-windows-sysmon/sysmon-event-details.jpg)
 
 See [Windows Sysmon Investigation](docs/windows-sysmon-investigation.md) for the focused investigation write-up.
 
@@ -257,6 +267,8 @@ Wazuh successfully exposed detailed Auditd fields including:
 - `data.audit.cwd`
 - `data.audit.success`
 
+![Auditd command details in Wazuh](screenshots/05-linux-auditd/auditd-command-details.jpg)
+
 See [Linux Auditd Command Monitoring](docs/linux-auditd-command-monitoring.md) for the focused investigation write-up.
 
 ---
@@ -278,6 +290,8 @@ Detection Rule Match ≠ Confirmed Security Incident
 ```
 
 MITRE ATT&CK mappings and alert severity provide investigative context, but the underlying evidence still has to be validated.
+
+![Auditd lscpu detection validation](screenshots/05-linux-auditd/auditd-lscpu-detection.jpg)
 
 ---
 
@@ -378,14 +392,12 @@ MITRE ATT&CK mappings were used as investigative context rather than automatic p
 
 # Evidence Organization
 
-The selected screenshot evidence is being organized into concise investigation folders rather than uploading every troubleshooting screenshot. The selection plan is documented in [`docs/screenshot-evidence-map.md`](docs/screenshot-evidence-map.md).
+The repository uses a deliberately small evidence set organized by investigation stage so the project remains easy to review. The mapping from original screenshots to final repository filenames is documented in [`docs/screenshot-evidence-map.md`](docs/screenshot-evidence-map.md).
 
 ---
 
 # Project Status
 
-🚧 **In Progress**
+✅ **Core lab implementation and documentation complete**
 
-Core Windows and Linux monitoring, network reconnaissance detection, SSH authentication analysis, Sysmon investigation, and Auditd command execution monitoring have been implemented.
-
-Final screenshot organization and documentation polish are being completed before the project is marked finished.
+The project currently includes Windows and Linux endpoint monitoring, network reconnaissance detection, SSH authentication analysis, Sysmon-based process investigation, Auditd command execution visibility, Wazuh troubleshooting, MITRE ATT&CK mapping, and selected screenshot evidence.
